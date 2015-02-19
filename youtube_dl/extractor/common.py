@@ -27,7 +27,6 @@ from ..utils import (
     compiled_regex_type,
     ExtractorError,
     float_or_none,
-    HEADRequest,
     int_or_none,
     RegexNotFoundError,
     sanitize_filename,
@@ -157,6 +156,7 @@ class InfoExtractor(object):
     view_count:     How many users have watched the video on the platform.
     like_count:     Number of positive ratings of the video
     dislike_count:  Number of negative ratings of the video
+    average_rating: Average rating give by users, the scale used depends on the webpage
     comment_count:  Number of comments on the video
     comments:       A list of comments, each with one or more of the following
                     properties (all but one of text or html optional):
@@ -264,8 +264,15 @@ class InfoExtractor(object):
 
     def extract(self, url):
         """Extracts URL information and returns it in list of dicts."""
-        self.initialize()
-        return self._real_extract(url)
+        try:
+            self.initialize()
+            return self._real_extract(url)
+        except ExtractorError:
+            raise
+        except compat_http_client.IncompleteRead as e:
+            raise ExtractorError('A network error has occured.', cause=e, expected=True)
+        except (KeyError, StopIteration) as e:
+            raise ExtractorError('An extractor error has occured.', cause=e)
 
     def set_downloader(self, downloader):
         """Sets the downloader for this IE."""
@@ -507,7 +514,7 @@ class InfoExtractor(object):
                 if mobj:
                     break
 
-        if os.name != 'nt' and sys.stderr.isatty():
+        if not self._downloader.params.get('no_color') and os.name != 'nt' and sys.stderr.isatty():
             _name = '\033[0;34m%s\033[0m' % name
         else:
             _name = name
@@ -656,6 +663,21 @@ class InfoExtractor(object):
         }
         return RATING_TABLE.get(rating.lower(), None)
 
+    def _family_friendly_search(self, html):
+        # See http://schema.org/VideoObject
+        family_friendly = self._html_search_meta('isFamilyFriendly', html)
+
+        if not family_friendly:
+            return None
+
+        RATING_TABLE = {
+            '1': 0,
+            'true': 0,
+            '0': 18,
+            'false': 18,
+        }
+        return RATING_TABLE.get(family_friendly.lower(), None)
+
     def _twitter_search_player(self, html):
         return self._html_search_meta('twitter:player', html,
                                       'twitter card player')
@@ -706,14 +728,14 @@ class InfoExtractor(object):
                 f.get('language_preference') if f.get('language_preference') is not None else -1,
                 f.get('quality') if f.get('quality') is not None else -1,
                 f.get('tbr') if f.get('tbr') is not None else -1,
+                f.get('filesize') if f.get('filesize') is not None else -1,
                 f.get('vbr') if f.get('vbr') is not None else -1,
-                ext_preference,
                 f.get('height') if f.get('height') is not None else -1,
                 f.get('width') if f.get('width') is not None else -1,
+                ext_preference,
                 f.get('abr') if f.get('abr') is not None else -1,
                 audio_ext_preference,
                 f.get('fps') if f.get('fps') is not None else -1,
-                f.get('filesize') if f.get('filesize') is not None else -1,
                 f.get('filesize_approx') if f.get('filesize_approx') is not None else -1,
                 f.get('source_preference') if f.get('source_preference') is not None else -1,
                 f.get('format_id'),
@@ -730,9 +752,7 @@ class InfoExtractor(object):
 
     def _is_valid_url(self, url, video_id, item='video'):
         try:
-            self._request_webpage(
-                HEADRequest(url), video_id,
-                'Checking %s URL' % item)
+            self._request_webpage(url, video_id, 'Checking %s URL' % item)
             return True
         except ExtractorError as e:
             if isinstance(e.cause, compat_HTTPError):
@@ -818,6 +838,7 @@ class InfoExtractor(object):
             note='Downloading m3u8 information',
             errnote='Failed to download m3u8 information')
         last_info = None
+        last_media = None
         kv_rex = re.compile(
             r'(?P<key>[a-zA-Z_-]+)=(?P<val>"[^"]+"|[^",]+)(?:,|$)')
         for line in m3u8_doc.splitlines():
@@ -828,6 +849,13 @@ class InfoExtractor(object):
                     if v.startswith('"'):
                         v = v[1:-1]
                     last_info[m.group('key')] = v
+            elif line.startswith('#EXT-X-MEDIA:'):
+                last_media = {}
+                for m in kv_rex.finditer(line):
+                    v = m.group('val')
+                    if v.startswith('"'):
+                        v = v[1:-1]
+                    last_media[m.group('key')] = v
             elif line.startswith('#') or not line.strip():
                 continue
             else:
@@ -856,6 +884,9 @@ class InfoExtractor(object):
                     width_str, height_str = resolution.split('x')
                     f['width'] = int(width_str)
                     f['height'] = int(height_str)
+                if last_media is not None:
+                    f['m3u8_media'] = last_media
+                    last_media = None
                 formats.append(f)
                 last_info = {}
         self._sort_formats(formats)

@@ -1,4 +1,5 @@
 # Supported sites
+ - **1tv**: Первый канал
  - **1up.com**
  - **220.ro**
  - **24video**
@@ -14,6 +15,7 @@
  - **AddAnime**
  - **AdobeTV**
  - **AdultSwim**
+ - **Aftenposten**
  - **Aftonbladet**
  - **AlJazeera**
  - **Allocine**
@@ -59,6 +61,8 @@
  - **Brightcove**
  - **BuzzFeed**
  - **BYUtv**
+ - **Camdemy**
+ - **CamdemyFolder**
  - **Canal13cl**
  - **canalc2.tv**
  - **Canalplus**: canalplus.fr, piwiplus.fr and d8.tv
@@ -117,6 +121,7 @@
  - **EllenTV**
  - **EllenTV:clips**
  - **ElPais**: El País
+ - **Embedly**
  - **EMPFlix**
  - **Engadget**
  - **Eporner**
@@ -133,7 +138,6 @@
  - **fernsehkritik.tv:postecke**
  - **Firedrive**
  - **Firstpost**
- - **firsttv**: Видеоархив - Первый канал
  - **Flickr**
  - **Folketinget**: Folketinget (ft.dk; Danish parliament)
  - **Foxgay**
@@ -173,6 +177,7 @@
  - **Helsinki**: helsinki.fi
  - **HentaiStigma**
  - **HistoricFilms**
+ - **History**
  - **hitbox**
  - **hitbox:live**
  - **HornBunny**
@@ -186,6 +191,7 @@
  - **ign.com**
  - **imdb**: Internet Movie Database trailers
  - **imdb:list**: Internet Movie Database lists
+ - **Imgur**
  - **Ina**
  - **InfoQ**
  - **Instagram**
@@ -224,6 +230,7 @@
  - **mailru**: Видео@Mail.Ru
  - **Malemotion**
  - **MDR**
+ - **media.ccc.de**
  - **metacafe**
  - **Metacritic**
  - **Mgoon**
@@ -285,6 +292,8 @@
  - **nowvideo**: NowVideo
  - **npo.nl**
  - **npo.nl:live**
+ - **npo.nl:radio**
+ - **npo.nl:radio:fragment**
  - **NRK**
  - **NRKTV**
  - **ntv.ru**
@@ -331,9 +340,9 @@
  - **Roxwel**
  - **RTBF**
  - **Rte**
+ - **rtl.nl**: rtl.nl and rtlxl.nl
  - **RTL2**
  - **RTLnow**
- - **rtlxl.nl**
  - **RTP**
  - **RTS**: RTS.ch
  - **rtve.es:alacarta**: RTVE a la carta
@@ -345,6 +354,7 @@
  - **rutube:movie**: Rutube movies
  - **rutube:person**: Rutube person videos
  - **RUTV**: RUTV.RU
+ - **Sandia**: Sandia National Laboratories
  - **Sapo**: SAPO Vídeos
  - **savefrom.net**
  - **SBS**: sbs.com.au
@@ -391,6 +401,7 @@
  - **StreamCZ**
  - **StreetVoice**
  - **SunPorno**
+ - **SVTPlay**
  - **SWRMediathek**
  - **Syfy**
  - **SztvHu**
@@ -524,6 +535,7 @@
  - **XVideos**
  - **XXXYMovies**
  - **Yahoo**: Yahoo screen and movies
+ - **Yam**
  - **YesJapan**
  - **Ynet**
  - **YouJizz**
