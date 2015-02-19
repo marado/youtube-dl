@@ -15,7 +15,8 @@ class TeamcocoIE(InfoExtractor):
                 'id': '80187',
                 'ext': 'mp4',
                 'title': 'Conan Becomes A Mary Kay Beauty Consultant',
-                'description': 'Mary Kay is perhaps the most trusted name in female beauty, so of course Conan is a natural choice to sell their products.'
+                'description': 'Mary Kay is perhaps the most trusted name in female beauty, so of course Conan is a natural choice to sell their products.',
+                'age_limit': 0,
             }
         }, {
             'url': 'http://teamcoco.com/video/louis-ck-interview-george-w-bush',
@@ -24,10 +25,16 @@ class TeamcocoIE(InfoExtractor):
                 'id': '19705',
                 'ext': 'mp4',
                 "description": "Louis C.K. got starstruck by George W. Bush, so what? Part one.",
-                "title": "Louis C.K. Interview Pt. 1 11/3/11"
+                "title": "Louis C.K. Interview Pt. 1 11/3/11",
+                'age_limit': 0,
             }
         }
     ]
+    _VIDEO_ID_REGEXES = (
+        r'"eVar42"\s*:\s*(\d+)',
+        r'Ginger\.TeamCoco\.openInApp\("video",\s*"([^"]+)"',
+        r'"id_not"\s*:\s*(\d+)'
+    )
 
     def _real_extract(self, url):
         mobj = re.match(self._VALID_URL, url)
@@ -38,8 +45,7 @@ class TeamcocoIE(InfoExtractor):
         video_id = mobj.group("video_id")
         if not video_id:
             video_id = self._html_search_regex(
-                r'<div\s+class="player".*?data-id="(\d+?)"',
-                webpage, 'video id')
+                self._VIDEO_ID_REGEXES, webpage, 'video id')
 
         data_url = 'http://teamcoco.com/cvp/2.0/%s.xml' % video_id
         data = self._download_xml(
@@ -83,4 +89,5 @@ class TeamcocoIE(InfoExtractor):
             'title': self._og_search_title(webpage),
             'thumbnail': self._og_search_thumbnail(webpage),
             'description': self._og_search_description(webpage),
+            'age_limit': self._family_friendly_search(webpage),
         }

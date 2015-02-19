@@ -25,6 +25,7 @@ from ..compat import (
 from ..utils import (
     clean_html,
     ExtractorError,
+    float_or_none,
     get_element_by_attribute,
     get_element_by_id,
     int_or_none,
@@ -540,26 +541,30 @@ class YoutubeIE(YoutubeBaseInfoExtractor, SubtitlesInfoExtractor):
         if cache_spec is not None:
             return lambda s: ''.join(s[i] for i in cache_spec)
 
+        download_note = (
+            'Downloading player %s' % player_url
+            if self._downloader.params.get('verbose') else
+            'Downloading %s player %s' % (player_type, player_id)
+        )
         if player_type == 'js':
             code = self._download_webpage(
                 player_url, video_id,
-                note='Downloading %s player %s' % (player_type, player_id),
+                note=download_note,
                 errnote='Download of %s failed' % player_url)
             res = self._parse_sig_js(code)
         elif player_type == 'swf':
             urlh = self._request_webpage(
                 player_url, video_id,
-                note='Downloading %s player %s' % (player_type, player_id),
+                note=download_note,
                 errnote='Download of %s failed' % player_url)
             code = urlh.read()
             res = self._parse_sig_swf(code)
         else:
             assert False, 'Invalid player type %r' % player_type
 
-        if cache_spec is None:
-            test_string = ''.join(map(compat_chr, range(len(example_sig))))
-            cache_res = res(test_string)
-            cache_spec = [ord(c) for c in cache_res]
+        test_string = ''.join(map(compat_chr, range(len(example_sig))))
+        cache_res = res(test_string)
+        cache_spec = [ord(c) for c in cache_res]
 
         self._downloader.cache.store('youtube-sigfuncs', func_id, cache_spec)
         return res
@@ -780,8 +785,9 @@ class YoutubeIE(YoutubeBaseInfoExtractor, SubtitlesInfoExtractor):
                     fo for fo in formats
                     if fo['format_id'] == format_id)
             except StopIteration:
-                f.update(self._formats.get(format_id, {}).items())
-                formats.append(f)
+                full_info = self._formats.get(format_id, {}).copy()
+                full_info.update(f)
+                formats.append(full_info)
             else:
                 existing_format.update(f)
         return formats
@@ -1123,6 +1129,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor, SubtitlesInfoExtractor):
             'view_count': view_count,
             'like_count': like_count,
             'dislike_count': dislike_count,
+            'average_rating': float_or_none(video_info.get('avg_rating', [None])[0]),
             'formats': formats,
         }
 

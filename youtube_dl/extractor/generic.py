@@ -473,6 +473,7 @@ class GenericIE(InfoExtractor):
         {
             'url': 'http://discourse.ubuntu.com/t/unity-8-desktop-mode-windows-on-mir/1986',
             'info_dict': {
+                'id': '1986',
                 'title': 'Unity 8 desktop-mode windows on Mir! - Ubuntu Discourse',
             },
             'playlist_mincount': 2,
@@ -524,6 +525,28 @@ class GenericIE(InfoExtractor):
                 'upload_date': '20150126',
             },
             'add_ie': ['Viddler'],
+        },
+        # jwplayer YouTube
+        {
+            'url': 'http://media.nationalarchives.gov.uk/index.php/webinar-using-discovery-national-archives-online-catalogue/',
+            'info_dict': {
+                'id': 'Mrj4DVp2zeA',
+                'ext': 'mp4',
+                'upload_date': '20150204',
+                'uploader': 'The National Archives UK',
+                'description': 'md5:a236581cd2449dd2df4f93412f3f01c6',
+                'uploader_id': 'NationalArchives08',
+                'title': 'Webinar: Using Discovery, The National Archives’ online catalogue',
+            },
+        },
+        # rtl.nl embed
+        {
+            'url': 'http://www.rtlnieuws.nl/nieuws/buitenland/aanslagen-kopenhagen',
+            'playlist_mincount': 5,
+            'info_dict': {
+                'id': 'aanslagen-kopenhagen',
+                'title': 'Aanslagen Kopenhagen | RTL Nieuws',
+            }
         }
     ]
 
@@ -769,6 +792,13 @@ class GenericIE(InfoExtractor):
                 'entries': entries,
             }
 
+        # Look for embedded rtl.nl player
+        matches = re.findall(
+            r'<iframe\s+(?:[a-zA-Z-]+="[^"]+"\s+)*?src="((?:https?:)?//(?:www\.)?rtl\.nl/system/videoplayer/[^"]+video_embed[^"]+)"',
+            webpage)
+        if matches:
+            return _playlist_from_matches(matches, ie='RtlNl')
+
         # Look for embedded (iframe) Vimeo player
         mobj = re.search(
             r'<iframe[^>]+?src=(["\'])(?P<url>(?:https?:)?//player\.vimeo\.com/video/.+?)\1', webpage)
@@ -776,7 +806,6 @@ class GenericIE(InfoExtractor):
             player_url = unescapeHTML(mobj.group('url'))
             surl = smuggle_url(player_url, {'Referer': url})
             return self.url_result(surl)
-
         # Look for embedded (swf embed) Vimeo player
         mobj = re.search(
             r'<embed[^>]+?src="((?:https?:)?//(?:www\.)?vimeo\.com/moogaloop\.swf.+?)"', webpage)
@@ -1034,7 +1063,12 @@ class GenericIE(InfoExtractor):
 
         # Look for embedded sbs.com.au player
         mobj = re.search(
-            r'<iframe[^>]+?src=(["\'])(?P<url>https?://(?:www\.)sbs\.com\.au/ondemand/video/single/.+?)\1',
+            r'''(?x)
+            (?:
+                <meta\s+property="og:video"\s+content=|
+                <iframe[^>]+?src=
+            )
+            (["\'])(?P<url>https?://(?:www\.)?sbs\.com\.au/ondemand/video/.+?)\1''',
             webpage)
         if mobj is not None:
             return self.url_result(mobj.group('url'), 'SBS')
@@ -1065,6 +1099,8 @@ class GenericIE(InfoExtractor):
             return self.url_result(mobj.group('url'), 'Livestream')
 
         def check_video(vurl):
+            if YoutubeIE.suitable(vurl):
+                return True
             vpath = compat_urlparse.urlparse(vurl).path
             vext = determine_ext(vpath)
             return '.' in vpath and vext not in ('swf', 'png', 'jpg', 'srt', 'sbv', 'sub', 'vtt', 'ttml')
@@ -1082,7 +1118,8 @@ class GenericIE(InfoExtractor):
                     JWPlayerOptions|
                     jwplayer\s*\(\s*["'][^'"]+["']\s*\)\s*\.setup
                 )
-                .*?file\s*:\s*["\'](.*?)["\']''', webpage))
+                .*?
+                ['"]?file['"]?\s*:\s*["\'](.*?)["\']''', webpage))
         if not found:
             # Broaden the search a little bit
             found = filter_video(re.findall(r'[^A-Za-z0-9]?(?:file|source)=(http[^\'"&]*)', webpage))
